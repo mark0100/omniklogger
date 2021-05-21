@@ -1,0 +1,17 @@
+## General
+
+## Linux
+.*
+!.gitignore
+*~
+
+## Python
+*.py[cod]
+
+
+## App specific
+config.ini
+logging.ini
+omniklogger.service
+omniklogger.log
+
