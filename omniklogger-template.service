@@ -1,0 +1,20 @@
+# Things todo:
+# - fill in the setting below for your system
+# - sudo cp omniklogger.service /etc/systemd/system
+# - sudo chmod 666 /etc/systemd/system/omniklogger.service
+# - sudo systemctl daemon-reload
+# - sudo systemctl start omniklogger.service
+# - sudo systemctl enable omniklogger.service
+
+[Unit]
+Description=UDP Listener for Omnik inverter data and logging.
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python <directory>/omniklogger/omniklogger.py	
+#Restart=always
+#RestartSec=1
+User=<owner-userid>
+
+[Install]
+WantedBy=multi-user.target
