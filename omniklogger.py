@@ -30,6 +30,7 @@ logger = None
 msgCount = 0
 msgErrorCount = 0
 msgAknowledgeCount = 0
+pluginRunTime = 0
 
 # Load the setting
 configFile = expandPath('config.ini')
@@ -41,12 +42,16 @@ config.read(configFile)
 fileConfig(expandPath('logging.ini'))
 logger = logging.getLogger()
 
+logger.info("Starting omniklogger") 
+
 # Load output plugins
 # Prepare path for plugin loading
 sys.path.append(expandPath('outputs'))
 
-PluginBase.config = config
-PluginBase.logger = logger
+# TODO: Howto pass the config and logger vars to the plugins on creation
+# instead of passing them in the process_message function?
+#PluginBase.config = config
+#PluginBase.logger = logger
 
 enabled_plugins = config.get('general', 'enabled_plugins').split(',')
 for plugin_name in enabled_plugins:
@@ -67,7 +72,7 @@ except Exception as e:
     logger.error('Create/bind Socket Error: ' + e)
     sys.exit(1)
     
-# logging.getLevelName(logger.level)
+# TODO: How to get the loglevel of the filehandler here instead of the root logger
 logger.info("Omniklogger up and listening on {0} on port {1} with loglevel: {2}".format(localIP, localPort, logging.getLevelName(logger.level)))
 logger.info('We are listening for UDP messages from an Inverter with serial: {0}'.format(serial))
 
@@ -84,29 +89,32 @@ while(True):
     logger.debug("{0}: Message from: {1}".format(datetime.datetime.now(), sender))
     logger.debug("msg.status: {0} msg.aknowledge: {1} msg.id: {2} serial: {3}".format(msg.status, msg.aknowledge, msg.id, serial))
     
-    # 192 is about once a day (8*(60/5)*2).
-    if msgCount % 192 == 0:
-        logger.info('Still processing Inverter messages. Total Messages received so far: {0} from which {1} were Error messages and {2}were Aknowledge messages'.format(msgCount, msgErrorCount, msgAknowledgeCount))
-
-    if msg.status == b'NO INVERTER DATA':
+    if msg.isNoInverterData:
         msgErrorCount = msgErrorCount + 1
         logger.error('Inverter says NO INVERTER DATA. Message:')
         logger.error(msg.dump())
 
-    elif msg.aknowledge == b'DATA SEND IS OK':
+    elif msg.isAknowledgement:
         msgAknowledgeCount = msgAknowledgeCount + 1
         logger.debug('Aknowledgement message received from Inverter: DATA SEND IS OK')
 
-    elif msg.id == serial:
+    elif msg.isDataMessage(serial):
         logger.debug("Received data from Inverter with serial: {0}".format(msg.id))
         
         for plugin in PluginBase.plugins:
+        	#TODO How to get the plugin name?
             logger.debug('Running plugin: ' + plugin.__class__.__name__)
             plugin.process_message(msg, logger, config)
 
+        pluginRunTime = pluginRunTime + 1      
+        
     else:
         msgErrorCount = msgErrorCount + 1
         logger.error('Unknown Message Status or message from unknown Inverter serial received')
         logger.error(msg.dump())
 
+    # Periodically log some stats so we know we are still running fine by looking at the log.
+    # 192 is about once a day (8*(60/5)*2).
+    if msgCount % 192 == 0:
+        logger.info('Still alive. Total Messages received so far: {0} from which {1} were Error messages and {2} were Aknowledge messages. The plugin(s) were run {3} times.'.format(msgCount, msgErrorCount, msgAknowledgeCount, pluginRunTime))
 

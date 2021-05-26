@@ -44,7 +44,7 @@ run the application as a service or recurring task.
 
 ## Running omniklogger
 * Change the output plugin in config.ini to your desired destination(s) and set the
-  logging level to INFO in logging.ini
+  logging level to INFO in logging.ini. Restart omniklogger.py.
 * To create a linux SystemD service and starting the service follow the ToDo list in
   omniklogger.service
   
