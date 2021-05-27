@@ -46,11 +46,14 @@ class PVoutputOutput(PluginLoader.PluginBase):
         get_data_encoded = urllib.parse.urlencode(get_data)
 
         request_object = urllib.request.Request(url + '?' + get_data_encoded)
-                
+
+        logger.debug('PVoutputOutput request: {0}'.format(url + '?' + get_data_encoded))
+                        
         try:
             response = urllib.request.urlopen(request_object)
         except Exception as e:
-            logger.error('PVoutputOutput Error: ' + e)
+            logger.error('PVoutputOutput Error: ' + str(e))
+            logger.error('PVoutputOutput request was: {0}'.format(url + '?' + get_data_encoded))
 
         if response is not None:
             logger.debug('PVoutputOutput: response from PVOutput site: {0}'.format(response.read()))
