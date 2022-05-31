@@ -8,7 +8,7 @@
 
 [Unit]
 Description=UDP Listener for Omnik inverter data and logging.
-After=network.target
+After=network-online.target avahi-daemon.service
 
 [Service]
 ExecStart=/usr/bin/python <directory>/omniklogger/omniklogger.py	

@@ -5,6 +5,7 @@ import logging.handlers
 from logging.config import fileConfig
 import InverterMsg  # Import the Msg handler
 import datetime
+import time
 import os
 import sys
 import configparser
@@ -64,6 +65,13 @@ serial = str.encode(config.get('inverter', 'serial'))
 localIP = config.get('UDPListener', 'localIP')
 localPort = int(config.get('UDPListener', 'localPort'))
 
+# Give my Raspberry Pi some time to initiate network services after a system reboot.
+# I get a "Create/bind Socket Error: [Errno -2] Name or service not known" or a
+# "Create/bind Socket Error: [Errno -5] No address associated with hostname" without this delay. 
+# TODO: Remove this delay
+logger.info('Waiting 10 seconds before startup...')
+time.sleep(10)
+
 # Create a datagram socket and Bind to address and ip
 try:
     UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
@@ -78,11 +86,14 @@ logger.info('We are listening for UDP messages from an Inverter with serial: {0}
 
 # Listen for incoming datagrams
 while(True):
-    bytesAddressPair = UDPServerSocket.recvfrom(1024)
-
+    try:
+        bytesAddressPair = UDPServerSocket.recvfrom(1024)
+    except Exception as e:
+        logger.error('Recvfrom Socket Error: ' + str(e))
+        continue
+    
     msgCount = msgCount + 1
     
-    #raw_msg = bytesAddressPair[0]
     msg = InverterMsg.InverterMsg(bytesAddressPair[0])
     sender = bytesAddressPair[1]
 
@@ -102,7 +113,7 @@ while(True):
         logger.debug("Received data from Inverter with serial: {0}".format(msg.id))
         
         for plugin in PluginBase.plugins:
-        	#TODO How to get the plugin name?
+            #TODO How to get the plugin name?
             logger.debug('Running plugin: ' + plugin.__class__.__name__)
             plugin.process_message(msg, logger, config)
 
@@ -114,7 +125,8 @@ while(True):
         logger.error(msg.dump())
 
     # Periodically log some stats so we know we are still running.
-    # 192 is about once a day (8*(60/5)*2).
-    if msgCount % 192 == 0:
+    # 240 is about once a day (10*(60/5)*2).
+    # TODO: Change the trigger for logging this to date shift 
+    if msgCount % 240 == 0:
         logger.info('Still alive. Total Messages received so far: {0} from which {1} were Error messages and {2} were Aknowledge messages. The plugin(s) were run {3} times.'.format(msgCount, msgErrorCount, msgAknowledgeCount, pluginRuns))
 

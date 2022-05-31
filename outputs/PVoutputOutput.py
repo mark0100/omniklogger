@@ -21,6 +21,7 @@ class PVoutputOutput(PluginLoader.PluginBase):
 
         url = "http://pvoutput.org/service/r2/addstatus.jsp"
 
+        # TODO: make the fields send to PVOutput configurable. 
         if config.getboolean('inverter', 'use_temperature'):
             get_data = {
                 'key': config.get('pvout', 'apikey'),
@@ -40,7 +41,7 @@ class PVoutputOutput(PluginLoader.PluginBase):
                 't': now.strftime('%H:%M'),
                 'v1': msg.e_today * 1000,
                 'v2': msg.p_ac(1),
-                'v6': msg.v_pv(1)
+                'v6': msg.v_ac(1)
             }
 
         get_data_encoded = urllib.parse.urlencode(get_data)
