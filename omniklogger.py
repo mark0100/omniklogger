@@ -45,6 +45,9 @@ logger = logging.getLogger()
 
 logger.info("Starting omniklogger") 
 
+#TODO: Change "Aknowledge" to "Confirmation" as the second message after a data message
+# really is a confirmation message. 
+
 # TODO: Howto pass the config and logger vars to the plugins on creation
 # instead of passing them in the process_message function?
 #PluginBase.config = config
@@ -68,7 +71,7 @@ localPort = int(config.get('UDPListener', 'localPort'))
 # Give my Raspberry Pi some time to initiate network services after a system reboot.
 # I get a "Create/bind Socket Error: [Errno -2] Name or service not known" or a
 # "Create/bind Socket Error: [Errno -5] No address associated with hostname" without this delay. 
-# TODO: Remove this delay
+# TODO: Remove this delay or make the sleep time configurable.
 logger.info('Waiting 10 seconds before startup...')
 time.sleep(10)
 
@@ -108,7 +111,10 @@ while(True):
     elif msg.isAknowledgement:
         msgAknowledgeCount = msgAknowledgeCount + 1
         logger.debug('Aknowledgement message received from Inverter: DATA SEND IS OK')
-
+        
+    elif msg.isUnknownLoggerMessage:
+        logger.debug('Unknown logger message received from logger with firmware version: {0}', format(msg.firmware_logger))
+        
     elif msg.isDataMessage(serial):
         logger.debug("Received data from Inverter with serial: {0}".format(msg.id))
         

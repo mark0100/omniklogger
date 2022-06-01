@@ -1,4 +1,5 @@
 import struct  # Converting bytes to numbers
+from builtins import property
 
 
 class InverterMsg(object):
@@ -99,6 +100,11 @@ class InverterMsg(object):
         return self.__get_string(117, 126)
 
     @property
+    def firmware_logger(self):
+        """Firmware version of the logging device."""
+        return self.__get_string(14, 36)
+    
+    @property
     def temperature(self):
         """Temperature recorded by the inverter."""
         return self.__get_short(31)
@@ -120,6 +126,10 @@ class InverterMsg(object):
     @property
     def isAknowledgement(self):
         return self.aknowledge == b'DATA SEND IS OK'
+    
+    @property
+    def isUnknownLoggerMessage(self):
+        return len(self.raw_msg) == 52 
     
     def isDataMessage(self, serial):
         return self.id == serial
