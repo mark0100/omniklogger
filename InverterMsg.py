@@ -129,7 +129,7 @@ class InverterMsg(object):
     
     @property
     def isUnknownLoggerMessage(self):
-        return len(self.raw_msg) == 52 
+        return len(self.raw_msg) == 53 
     
     def isDataMessage(self, serial):
         return self.id == serial

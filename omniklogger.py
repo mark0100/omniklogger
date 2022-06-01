@@ -100,7 +100,7 @@ while(True):
     msg = InverterMsg.InverterMsg(bytesAddressPair[0])
     sender = bytesAddressPair[1]
 
-    logger.debug("Message from {0} received".format(sender))
+    logger.debug("Message from {0} received. Message length: {1}".format(sender, len(msg.raw_message)))
     logger.debug("msg.status: {0} msg.aknowledge: {1} msg.id: {2} serial: {3}".format(msg.status, msg.aknowledge, msg.id, serial))
     
     if msg.isNoInverterData:
