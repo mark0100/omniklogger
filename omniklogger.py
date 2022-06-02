@@ -113,7 +113,7 @@ while(True):
         logger.debug('Aknowledgement message received from Inverter: DATA SEND IS OK')
         
     elif msg.isUnknownLoggerMessage:
-        logger.debug('Unknown logger message received from logger with firmware version: {0}', format(msg.firmware_logger))
+        logger.debug('Unknown logger message received from logger with firmware version: {0}'.format(msg.firmware_logger))
         
     elif msg.isDataMessage(serial):
         logger.debug("Received data from Inverter with serial: {0}".format(msg.id))
