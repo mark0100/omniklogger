@@ -53,6 +53,8 @@ logger.info("Starting omniklogger")
 #PluginBase.config = config
 #PluginBase.logger = logger
 
+#TODO: Add log message on exiting the listener.
+
 # Load output plugins
 # Prepare path for plugin loading
 sys.path.append(expandPath('outputs'))
@@ -74,6 +76,9 @@ localPort = int(config.get('UDPListener', 'localPort'))
 # TODO: Remove this delay or make the sleep time configurable.
 logger.info('Waiting 10 seconds before startup...')
 time.sleep(10)
+
+# TODO: Replace the fixed delay and try block with a connection retry until bind is succesfull, because after f.i. a power outage the
+# inverter and/or router could take longer to reboot than the macine this service is running on.
 
 # Create a datagram socket and Bind to address and ip
 try:
