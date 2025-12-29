@@ -10,6 +10,8 @@ import os
 import sys
 import configparser
 from PluginLoader import PluginBase
+#from builtins import True
+#from builtins import False
 
 def expandPath(path):
     """
@@ -25,6 +27,10 @@ def expandPath(path):
         return path
     else:
         return os.path.dirname(os.path.abspath(__file__)) + "/" + path
+
+maxConnRetries = 10
+connected = False
+retries = 1
 
 config = None
 logger = None
@@ -70,23 +76,20 @@ serial = str.encode(config.get('inverter', 'serial'))
 localIP = config.get('UDPListener', 'localIP')
 localPort = int(config.get('UDPListener', 'localPort'))
 
-# Give my Raspberry Pi some time to initiate network services after a system reboot.
-# I get a "Create/bind Socket Error: [Errno -2] Name or service not known" or a
-# "Create/bind Socket Error: [Errno -5] No address associated with hostname" without this delay. 
-# TODO: Remove this delay or make the sleep time configurable.
-logger.info('Waiting 10 seconds before startup...')
-time.sleep(10)
-
-# TODO: Replace the fixed delay and try block with a connection retry until bind is succesfull, because after f.i. a power outage the
-# inverter and/or router could take longer to reboot than the macine this service is running on.
-
-# Create a datagram socket and Bind to address and ip
-try:
-    UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-    UDPServerSocket.bind((localIP, localPort))
-except Exception as e:
-    logger.error('Create/bind Socket Error: ' + str(e))
-    sys.exit(1)
+while(connected == False & retries <= maxConnRetries):
+    # Create a datagram socket and Bind to address and ip
+    try:
+        UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        UDPServerSocket.bind((localIP, localPort))
+        connected = True
+    except Exception as e:
+        logger.error('Create/bind Socket Error: ' + str(e) + ' Host:' + str(localIP) + ' Port:' + str(localPort) + '. Will retry ' + str(maxConnRetries - retries) + ' more times...')
+        retries = retries + 1
+        if(retries == maxConnRetries):
+            logger.error('I give up. Socket bind failed. Omniklogger not started!')
+            exit(1)
+        else:
+            time.sleep(60)
     
 # TODO: How to get the loglevel of the filehandler here instead of the root logger
 logger.info("Omniklogger up and listening on {0} on port {1} with loglevel: {2}".format(localIP, localPort, logging.getLevelName(logger.level)))
