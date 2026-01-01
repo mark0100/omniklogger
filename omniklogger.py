@@ -10,8 +10,6 @@ import os
 import sys
 import configparser
 from PluginLoader import PluginBase
-#from builtins import True
-#from builtins import False
 
 def expandPath(path):
     """
@@ -59,8 +57,6 @@ logger.info("Starting omniklogger")
 #PluginBase.config = config
 #PluginBase.logger = logger
 
-#TODO: Add log message on exiting the listener.
-
 # Load output plugins
 # Prepare path for plugin loading
 sys.path.append(expandPath('outputs'))
@@ -76,6 +72,8 @@ serial = str.encode(config.get('inverter', 'serial'))
 localIP = config.get('UDPListener', 'localIP')
 localPort = int(config.get('UDPListener', 'localPort'))
 
+# Try several times to bind to the socket because after f.i. a power outage all network services have to be up
+# for the bind to succeed.
 while(connected == False & retries <= maxConnRetries):
     # Create a datagram socket and Bind to address and ip
     try:
@@ -91,8 +89,10 @@ while(connected == False & retries <= maxConnRetries):
         else:
             time.sleep(60)
     
-# TODO: How to get the loglevel of the filehandler here instead of the root logger
-logger.info("Omniklogger up and listening on {0} on port {1} with loglevel: {2}".format(localIP, localPort, logging.getLevelName(logger.level)))
+
+logger.info("Omniklogger up and listening on {0} on port {1} with root loglevel: {2}".format(localIP, localPort, logging.getLevelName(logger.level)))
+if logger.hasHandlers():
+    logger.info("The root logger has the following handlers: {0}".format(logger.handlers))
 logger.info('We are listening for UDP messages from an Inverter with serial: {0}'.format(serial))
 
 # Listen for incoming datagrams
@@ -127,8 +127,7 @@ while(True):
         logger.debug("Received data from Inverter with serial: {0}".format(msg.id))
         
         for plugin in PluginBase.plugins:
-            #TODO How to get the plugin name?
-            logger.debug('Running plugin: ' + plugin.__class__.__name__)
+            logger.debug('Forwarding received data to plugin: ' + plugin.__module__)
             plugin.process_message(msg, logger, config)
 
         pluginRuns = pluginRuns + 1      
@@ -144,3 +143,4 @@ while(True):
     if msgCount % 240 == 0:
         logger.info('Still alive. Total Messages received so far: {0} from which {1} were Error messages and {2} were Aknowledge messages. The plugin(s) were run {3} times.'.format(msgCount, msgErrorCount, msgAknowledgeCount, pluginRuns))
 
+logger.info("Omniklogger stopped.")
